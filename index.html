@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placeholder Image Generator</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Placeholder Image Generator</h1>
+        <div class="form-row align-items-center">
+            <div class="col-sm-3 my-1">
+                <input type="number" class="form-control" id="width" placeholder="Width">
+            </div>
+            <div class="col-sm-3 my-1">
+                <input type="number" class="form-control" id="height" placeholder="Height">
+            </div>
+            <div class="col-auto my-1">
+                <button type="button" class="btn btn-primary" onclick="generateImage()">Generate</button>
+            </div>
+        </div>
+        <div class="mt-4">
+            <div id="imageContainer" class="mb-3"></div>
+            <button type="button" class="btn btn-success" id="downloadBtn" style="display: none;">Download</button>
+        </div>
+    </div>
+
+    <script>
+        let currentBlobUrl = null;
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function generateGradient() {
+            const color1 = getRandomColor();
+            const color2 = getRandomColor();
+            return `linear-gradient(to right, ${color1}, ${color2})`;
+        }
+
+        function generateImage() {
+            const width = document.getElementById('width').value || 150;
+            const height = document.getElementById('height').value || 150;
+            const gradient = generateGradient();
+            const imageContainer = document.getElementById('imageContainer');
+
+            imageContainer.innerHTML = `<div class="placeholder" style="width: ${width}px; height: ${height}px; background: ${gradient};">
+                ${width} x ${height}
+            </div>`;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Create gradient
+            const gradientFill = ctx.createLinearGradient(0, 0, width, 0);
+            gradientFill.addColorStop(0, gradient.match(/#([0-9A-F]{6})/i)[0]);
+            gradientFill.addColorStop(1, gradient.match(/#([0-9A-F]{6})/ig)[1]);
+
+            ctx.fillStyle = gradientFill;
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '20px Arial';
+            ctx.fillText(`${width} x ${height}`, width / 2, height / 2);
+
+            canvas.toBlob((blob) => {
+                if (currentBlobUrl) {
+                    URL.revokeObjectURL(currentBlobUrl);
+                }
+                currentBlobUrl = URL.createObjectURL(blob);
+                const downloadBtn = document.getElementById('downloadBtn');
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = currentBlobUrl;
+                    a.download = 'placeholder.png';
+                    a.click();
+                };
+            });
+        }
+    </script>
+</body>
+</html>
